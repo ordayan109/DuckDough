@@ -4,6 +4,12 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val permanentStore = providers.environmentVariable("DUCKDOUGH_KEYSTORE_PATH").orNull
+val permanentPassword = providers.environmentVariable("DUCKDOUGH_STORE_PASSWORD").orNull
+val permanentAlias = providers.environmentVariable("DUCKDOUGH_KEY_ALIAS").orNull
+val permanentKeyPassword = providers.environmentVariable("DUCKDOUGH_KEY_PASSWORD").orNull
+val permanentSigningReady = listOf(permanentStore, permanentPassword, permanentAlias, permanentKeyPassword).all { !it.isNullOrBlank() }
+
 android {
     namespace = "com.norman.duckdough"
     compileSdk = 35
@@ -11,9 +17,22 @@ android {
         applicationId = "com.norman.duckdough"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = providers.gradleProperty("duckdoughVersionCode").orNull?.toInt() ?: 2
+        versionName = providers.gradleProperty("duckdoughVersionName").orNull ?: "0.2.0"
+        require(versionCode!! > 0) { "versionCode must be positive" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    if (permanentSigningReady) {
+        signingConfigs.create("permanentRelease") {
+            storeFile = file(permanentStore!!)
+            storeType = "PKCS12"
+            storePassword = permanentPassword
+            keyAlias = permanentAlias
+            keyPassword = permanentKeyPassword
+        }
+        buildTypes.getByName("release") {
+            signingConfig = signingConfigs.getByName("permanentRelease")
+        }
     }
     buildFeatures { compose = true }
     compileOptions {
@@ -21,6 +40,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+}
+
+gradle.taskGraph.whenReady {
+    val releaseRequested = allTasks.any { it.name in setOf("assembleRelease", "bundleRelease", "packageRelease") }
+    if (releaseRequested && !permanentSigningReady && providers.gradleProperty("duckdoughAllowUnsigned").orNull != "true") {
+        throw GradleException("Permanent release signing is not configured. See SIGNING.md; release builds never fall back to a debug key.")
+    }
 }
 
 dependencies {

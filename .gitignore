@@ -7,3 +7,10 @@ local.properties
 *.keystore
 captures/
 outputs/
+keystore.properties
+signing-private.json
+github-signing-bundle.txt
+*.p12
+*.pfx
+.tools/
+__pycache__/

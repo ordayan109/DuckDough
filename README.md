@@ -27,10 +27,12 @@ Open this directory in Android Studio with JDK 17, or run:
 On Windows, use `gradlew.bat`. The installable development APK is written to
 `app/build/outputs/apk/debug/app-debug.apk`.
 
-GitHub Actions builds the APK, runs the calculation tests and Android lint,
-and exercises the native UI on an Android emulator. Download the APK from the
-`DuckDough-Android-APK` artifact of the relevant workflow run.
+GitHub Actions runs the calculation tests and Android lint, exercises the native
+UI, and builds a permanent-key release on trusted `main` builds when the signing
+secret is configured. Download the `DuckDough-Signed-Release` artifact for the
+APK to distribute. `DuckDough-Debug-APK` is for development only.
 
-The development APK uses Android's debug signing key. For a distribution build,
-create and retain a private release signing key outside the repository.
-
+The release workflow verifies both signatures and a real in-place update with
+saved app data on an Android emulator. See [SIGNING.md](SIGNING.md) for key
+backup, signing from another computer, and the one-time switch from old debug
+builds. The private key and its password are never committed to this repository.
