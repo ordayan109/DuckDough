@@ -50,7 +50,11 @@ jobs:
           disable-animations: true
           script: |
             ./gradlew connectedDebugAndroidTest --stacktrace
-            adb exec-out run-as com.norman.duckdough cat files/duckdough-screen.png > outputs/duckdough-android.png
+            adb install -r outputs/DuckDough-v0.1.0.apk
+            adb shell am start -W -n com.norman.duckdough/.MainActivity
+            adb shell uiautomator dump /sdcard/duckdough-window.xml
+            adb exec-out screencap -p > outputs/duckdough-android.png
+            python3 -c "from pathlib import Path; assert Path('outputs/duckdough-android.png').read_bytes().startswith(bytes.fromhex('89504e470d0a1a0a'))"
       - name: Upload test reports and Android screenshot
         if: always()
         uses: actions/upload-artifact@v4
@@ -60,3 +64,4 @@ jobs:
             app/build/reports/
             outputs/duckdough-android.png
           if-no-files-found: warn
+
