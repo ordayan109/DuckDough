@@ -25,7 +25,11 @@ def count_field() -> ET.Element:
         xml = adb("exec-out", "cat", "/sdcard/duckdough-update.xml")
         root = ET.fromstring(xml)
         for node in root.iter("node"):
-            if node.get("content-desc") == "מספר פיצות" and "EditText" in node.get("class", ""):
+            # Compose may expose the label on the EditText itself or on its
+            # child semantics node after the editor gains focus.
+            if "EditText" in node.get("class", "") and any(
+                child.get("content-desc") == "מספר פיצות" for child in node.iter("node")
+            ):
                 return node
         # Recover ONLY the unrelated emulator launcher ANR. An app crash or an
         # unexpected system dialog is still a test failure and is not dismissed.
