@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.DuckDough" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">#FBF6EB</item>
+        <item name="android:navigationBarColor">#FBF6EB</item>
+        <item name="android:windowBackground">#FBF6EB</item>
+        <item name="android:colorAccent">#AD3C2E</item>
+    </style>
+    <color name="icon_background">#FBF6EB</color>
+</resources>
