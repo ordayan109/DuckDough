@@ -35,7 +35,7 @@ class CalculatorUiTest {
         compose.onNodeWithTag("reset").performClick()
         compose.onNodeWithTag("amount_weight").performScrollTo().performTextReplacement("250")
         compose.onNodeWithTag("amount_weight").performImeAction()
-        compose.onNodeWithTag("reset").performScrollTo()
+        compose.onNodeWithText("DuckDough", useUnmergedTree = true).performScrollTo()
         compose.waitForIdle()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         File(context.filesDir,"duckdough-screen.png").outputStream().use { output ->
