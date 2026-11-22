@@ -84,4 +84,6 @@ jobs:
           path: |
             app/build/reports/
             outputs/duckdough-android.png
+            outputs/update-check-ui.xml
+            outputs/update-check-ui.png
           if-no-files-found: warn

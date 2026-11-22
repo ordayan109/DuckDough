@@ -19,11 +19,17 @@ def adb(*args: str, check: bool = True) -> str:
 
 def count_field() -> ET.Element:
     adb("shell", "uiautomator", "dump", "/sdcard/duckdough-update.xml")
-    root = ET.fromstring(adb("exec-out", "cat", "/sdcard/duckdough-update.xml"))
+    xml = adb("exec-out", "cat", "/sdcard/duckdough-update.xml")
+    root = ET.fromstring(xml)
     for node in root.iter("node"):
         if node.get("content-desc") == "מספר פיצות" and "EditText" in node.get("class", ""):
             return node
-    raise RuntimeError("Pizza-count field was not found in the native UI")
+    diagnostics = ROOT / "outputs"
+    diagnostics.mkdir(exist_ok=True)
+    (diagnostics / "update-check-ui.xml").write_text(xml, encoding="utf-8")
+    image = subprocess.check_output(["adb", "exec-out", "screencap", "-p"])
+    (diagnostics / "update-check-ui.png").write_bytes(image)
+    raise RuntimeError("Pizza-count field was not found in the native UI; a diagnostic snapshot was saved")
 
 
 def verify() -> None:
@@ -43,6 +49,10 @@ def verify() -> None:
     for _ in range(8):
         adb("shell", "input", "keyevent", "67")
     adb("shell", "input", "text", "7")
+    # Dismiss an IME if present, then relaunch to verify persisted rather than
+    # transient editor state. Relaunch also handles a device with a hardware keyboard.
+    adb("shell", "input", "keyevent", "4")
+    adb("shell", "am", "start", "-W", "-n", PACKAGE + "/.MainActivity")
     if count_field().get("text") != "7":
         raise RuntimeError("The test quantity was not entered successfully")
     # No uninstall or data clear is permitted between these two signed APKs.
