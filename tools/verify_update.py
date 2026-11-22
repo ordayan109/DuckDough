@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = "com.norman.duckdough"
+LAUNCHER_DIALOG_RECOVERIES = 0
 
 
 def adb(*args: str, check: bool = True) -> str:
@@ -18,12 +19,24 @@ def adb(*args: str, check: bool = True) -> str:
 
 
 def count_field() -> ET.Element:
-    adb("shell", "uiautomator", "dump", "/sdcard/duckdough-update.xml")
-    xml = adb("exec-out", "cat", "/sdcard/duckdough-update.xml")
-    root = ET.fromstring(xml)
-    for node in root.iter("node"):
-        if node.get("content-desc") == "מספר פיצות" and "EditText" in node.get("class", ""):
-            return node
+    global LAUNCHER_DIALOG_RECOVERIES
+    for _ in range(4):
+        adb("shell", "uiautomator", "dump", "/sdcard/duckdough-update.xml")
+        xml = adb("exec-out", "cat", "/sdcard/duckdough-update.xml")
+        root = ET.fromstring(xml)
+        for node in root.iter("node"):
+            if node.get("content-desc") == "מספר פיצות" and "EditText" in node.get("class", ""):
+                return node
+        # Recover ONLY the unrelated emulator launcher ANR. An app crash or an
+        # unexpected system dialog is still a test failure and is not dismissed.
+        launcher_dialog = any("Pixel Launcher" in node.get("text", "") and "responding" in node.get("text", "") for node in root.iter("node"))
+        close = next((node for node in root.iter("node") if node.get("text") == "Close app" and node.get("package") == "android"), None)
+        if not launcher_dialog or close is None:
+            break
+        bounds = [int(value) for value in re.findall(r"\d+", close.attrib["bounds"])]
+        adb("shell", "input", "tap", str((bounds[0] + bounds[2]) // 2), str((bounds[1] + bounds[3]) // 2))
+        LAUNCHER_DIALOG_RECOVERIES += 1
+        adb("shell", "am", "start", "-W", "-n", PACKAGE + "/.MainActivity")
     diagnostics = ROOT / "outputs"
     diagnostics.mkdir(exist_ok=True)
     (diagnostics / "update-check-ui.xml").write_text(xml, encoding="utf-8")
@@ -68,7 +81,7 @@ def verify() -> None:
     report = {"result": "passed", "applicationId": PACKAGE,
               "oldVersionCode": release_info["versionCode"], "newVersionCode": release_info["updateProbeVersionCode"],
               "certificateSha256": release_info["certificateSha256"], "savedPizzaCountAfterUpdate": 7,
-              "uninstallBetweenSignedVersions": False}
+              "uninstallBetweenSignedVersions": False, "emulatorLauncherDialogRecoveries": LAUNCHER_DIALOG_RECOVERIES}
     (output / "UPDATE-VERIFICATION.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report))
 

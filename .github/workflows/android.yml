@@ -61,6 +61,8 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
+            adb shell wm size 720x1600
+            adb shell wm density 320
             ./gradlew connectedDebugAndroidTest --stacktrace
             adb install -r outputs/debug/DuckDough-debug.apk
             adb shell am start -W -n com.norman.duckdough/.MainActivity
