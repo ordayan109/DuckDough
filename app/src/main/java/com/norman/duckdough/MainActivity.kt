@@ -74,6 +74,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = lightColorScheme(
                 primary = Tomato, onPrimary = Paper, secondary = Basil,
+                secondaryContainer = PaleGreen, onSecondaryContainer = Basil,
                 background = Cream, surface = Cream, onSurface = Ink,
                 onBackground = Ink, outline = Line
             )) {
@@ -328,3 +329,4 @@ private fun QuantityInput(id: String, value: String, change: (String) -> Unit, f
         keyboardOptions = KeyboardOptions(keyboardType = if (integer) KeyboardType.Number else KeyboardType.Decimal, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }))
 }
+
